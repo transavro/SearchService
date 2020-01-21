@@ -1,0 +1,158 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "CDEService.proto",
+    "version": "1.0.0"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/search": {
+      "post": {
+        "operationId": "Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "$ref": "#/x-stream-definitions/CDEServiceContentTile"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CDEServiceSearchQuery"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "CDEServiceContentTile": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "mediaUrl": {
+          "type": "string"
+        },
+        "tileType": {
+          "$ref": "#/definitions/CDEServiceTileType"
+        },
+        "poster": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "portrait": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isDetailPage": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "contentId": {
+          "type": "string"
+        },
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "realeaseDate": {
+          "type": "string"
+        }
+      }
+    },
+    "CDEServiceSearchQuery": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "CDEServiceTileType": {
+      "type": "string",
+      "enum": [
+        "ImageTile",
+        "VideoTile",
+        "FeatureTile",
+        "AdvertiseTile",
+        "CarouselTile"
+      ],
+      "default": "ImageTile"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  },
+  "x-stream-definitions": {
+    "CDEServiceContentTile": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/CDEServiceContentTile"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of CDEServiceContentTile"
+    }
+  }
+}
