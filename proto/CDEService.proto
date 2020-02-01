@@ -6,7 +6,14 @@ import   "google/api/annotations.proto";
 
 
 service CDEService {
-    rpc Search(SearchQuery) returns(stream ContentTile) {
+    rpc SearchStream(SearchQuery) returns(stream ContentTile) {
+        option (google.api.http) = {
+                post:"/searchStream"
+                body: "*"
+        };
+    }
+
+    rpc Search(SearchQuery) returns(SearchResponse) {
         option (google.api.http) = {
                 post:"/search"
                 body: "*"
@@ -16,6 +23,10 @@ service CDEService {
 
 message SearchQuery{
     string query = 1;
+}
+
+message SearchResponse{
+    repeated ContentTile contentTile = 1;
 }
 
 

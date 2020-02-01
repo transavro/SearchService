@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "CDEService.proto",
-    "version": "1.0.0"
+    "version": "version not set"
   },
   "consumes": [
     "application/json"
@@ -14,6 +14,32 @@
     "/search": {
       "post": {
         "operationId": "Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CDEServiceSearchResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CDEServiceSearchQuery"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    },
+    "/searchStream": {
+      "post": {
+        "operationId": "SearchStream",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -89,6 +115,17 @@
       "properties": {
         "query": {
           "type": "string"
+        }
+      }
+    },
+    "CDEServiceSearchResponse": {
+      "type": "object",
+      "properties": {
+        "contentTile": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CDEServiceContentTile"
+          }
         }
       }
     },

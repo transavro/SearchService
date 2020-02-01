@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/sahilm/fuzzy"
 	pbAuth "github.com/transavro/AuthService/proto"
 	pb "github.com/transavro/SearchService/proto"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,6 +29,8 @@ const (
 	developmentMongoHost = "mongodb://dev-uni.cloudwalker.tv:6592"
 	schedularMongoHost = "mongodb://192.168.1.143:27017"
 	schedularRedisHost = ":6379"
+	grpc_port = ":7771"
+	rest_port = ":7772"
 )
 
 type nullawareStrDecoder struct{}
@@ -86,6 +89,7 @@ func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 }
 
 func checkingJWTToken(ctx context.Context) error{
+
 	meta, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return status.Error(codes.NotFound, fmt.Sprintf("no auth meta-data found in request" ))
@@ -125,7 +129,7 @@ func streamIntercept(server interface{}, stream grpc.ServerStream, info *grpc.St
 	return handler(server, stream)
 }
 
-func startGRPCServer(address string, server Server) error {
+func startGRPCServer(address string) error {
 	// create a listener on TCP port
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -135,13 +139,21 @@ func startGRPCServer(address string, server Server) error {
 		return err
 	}
 
-	serverOptions := []grpc.ServerOption{grpc.UnaryInterceptor(unaryInterceptor), grpc.StreamInterceptor(streamIntercept)}
+	s := Server {
+		Tiles:         targetArray ,
+	}
+
+	// TODO revert this changes
+	//serverOptions := []grpc.ServerOption{grpc.UnaryInterceptor(unaryInterceptor), grpc.StreamInterceptor(streamIntercept)}
+	//
+	//// attach the Ping service to the server
+	//grpcServer := grpc.NewServer(serverOptions...)
+
+
+	grpcServer := grpc.NewServer()
 
 	// attach the Ping service to the server
-	grpcServer := grpc.NewServer(serverOptions...)
-
-	// attach the Ping service to the server
-	pb.RegisterCDEServiceServer(grpcServer, &server)  // start the server
+	pb.RegisterCDEServiceServer(grpcServer, &s)  // start the server
 	//log.Printf("starting HTTP/2 gRPC server on %s", address)
 	if err := grpcServer.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %s", err)
@@ -153,7 +165,11 @@ func startRESTServer(address, grpcAddress string) error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	mux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher))
+
+
+	// TODO revert this changes
+	//mux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher))
+	mux := runtime.NewServeMux()
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}  // Register ping
 	err := pb.RegisterCDEServiceHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
@@ -184,16 +200,9 @@ func getMongoCollection(dbName, collectionName, mongoHost string )  *mongo.Colle
 func main()  {
 	initializeProcess();
 
-	serverhandler := Server{
-		Tiles:         targetArray ,
-	}
-
-	grpcAddress := fmt.Sprintf(":%d",  7771)
-	restAddress := fmt.Sprintf(":%d",  7772)
-
 	// fire the gRPC server in a goroutine
 	go func() {
-		err := startGRPCServer(grpcAddress, serverhandler)
+		err := startGRPCServer(grpc_port)
 		if err != nil {
 			log.Fatalf("failed to start gRPC server: %s", err)
 		}
@@ -201,7 +210,7 @@ func main()  {
 
 	// fire the REST server in a goroutine
 	go func() {
-		err := startRESTServer(restAddress, grpcAddress)
+		err := startRESTServer(rest_port, grpc_port)
 		if err != nil {
 			log.Fatalf("failed to start gRPC server: %s", err)
 		}
@@ -273,4 +282,30 @@ func loadingInToArray(tileCollection *mongo.Collection){
 		// filling the target Array.
 		targetArray = append(targetArray, contentTile)
 	}
+}
+
+
+type Server struct {
+	Tiles TileArray
+}
+
+func(s *Server) Search( ctx context.Context, query *pb.SearchQuery) (*pb.SearchResponse, error) {
+	results := fuzzy.FindFrom(query.Query, s.Tiles)
+	var searchResult []*pb.ContentTile
+	for _, r := range results {
+		searchResult = append(searchResult , &s.Tiles[r.Index])
+	}
+	return &pb.SearchResponse{ContentTile: searchResult}, nil
+}
+
+
+func(s *Server) SearchStream( query *pb.SearchQuery, stream pb.CDEService_SearchStreamServer) error {
+	results := fuzzy.FindFrom(query.Query, s.Tiles)
+	for _, r := range results {
+		err := stream.Send(&s.Tiles[r.Index])
+		if err != nil {
+			return  err
+		}
+	}
+	return nil
 }
