@@ -3,10 +3,11 @@ syntax = "proto3";
 package CDEService;
 
 import   "google/api/annotations.proto";
+import   "github.com/transavro/ScheduleService/proto/SchedularService.proto";
 
 
 service CDEService {
-    rpc SearchStream(SearchQuery) returns(stream ContentTile) {
+    rpc SearchStream(SearchQuery) returns(stream SchedularService.Content) {
         option (google.api.http) = {
                 post:"/searchStream"
                 body: "*"
@@ -26,62 +27,5 @@ message SearchQuery{
 }
 
 message SearchResponse{
-    repeated ContentTile contentTile = 1;
-}
-
-
-//content tile
-
-message ContentTile{
-    string title = 1;
-    string mediaUrl = 2;
-    TileType tileType = 3;
-    repeated string poster = 4;
-    repeated string portrait = 5;
-    bool isDetailPage = 6;
-    string packageName = 7;
-    string contentId = 8;
-    repeated string target = 9;
-    string realeaseDate = 10;
-}
-
-enum TileType {
-    ImageTile = 0;
-    VideoTile = 1;
-    FeatureTile = 2;
-    AdvertiseTile = 3;
-    CarouselTile = 4;
-}
-
-
-//MovieTile
-
-
-message MovieTile {
-    string ref_id = 1;
-    POSTERS posters = 2;
-    CONTENT content = 3;
-    METADATA metadata = 4;
-    TileType tileType = 5;
-}
-
-message POSTERS {
-    repeated string landscape = 1;
-    repeated string portrait = 2;
-    repeated string banner = 3;
-}
-
-message METADATA {
-    string title = 1;
-    string releaseDate = 2;
-}
-
-message CONTENT {
-    bool detailPage = 1;
-    string package = 2;
-    repeated string target = 3;
-    string type = 4;
-    string playstoreUrl = 5;
-    bool useAlternate = 6;
-    string alternateUrl = 7;
+    repeated SchedularService.Content contentTile = 1;
 }

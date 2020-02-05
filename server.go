@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/joho/godotenv"
 	"github.com/sahilm/fuzzy"
 	pbAuth "github.com/transavro/AuthService/proto"
+	pbSch "github.com/transavro/ScheduleService/proto"
 	pb "github.com/transavro/SearchService/proto"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
@@ -21,19 +23,14 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"time"
 )
 
-const (
-	developmentMongoHost = "mongodb://dev-uni.cloudwalker.tv:6592"
-	schedularMongoHost = "mongodb://192.168.1.143:27017"
-	schedularRedisHost = ":6379"
-	grpc_port = ":7771"
-	rest_port = ":7772"
-)
-
 type nullawareStrDecoder struct{}
+
+var mongoDbHost, redisPort, grpcPort, restPort  string
 
 func (nullawareStrDecoder) DecodeValue(dctx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
 	if !val.CanSet() || val.Kind() != reflect.String {
@@ -60,16 +57,9 @@ func (nullawareStrDecoder) DecodeValue(dctx bsoncodec.DecodeContext, vr bsonrw.V
 
 
 
-// private type for Context keys
-type contextKey int
-
-const (
-	clientIDKey contextKey = iota
-)
-
 var targetArray TileArray
 
-type TileArray []pb.ContentTile
+type TileArray []pbSch.Content
 
 func (e TileArray) String(i int) string  {
 	return e[i].Title
@@ -144,13 +134,9 @@ func startGRPCServer(address string) error {
 	}
 
 	// TODO revert this changes
-	//serverOptions := []grpc.ServerOption{grpc.UnaryInterceptor(unaryInterceptor), grpc.StreamInterceptor(streamIntercept)}
-	//
-	//// attach the Ping service to the server
-	//grpcServer := grpc.NewServer(serverOptions...)
-
-
-	grpcServer := grpc.NewServer()
+	serverOptions := []grpc.ServerOption{grpc.UnaryInterceptor(unaryInterceptor), grpc.StreamInterceptor(streamIntercept)}
+	// attach the Ping service to the server
+	grpcServer := grpc.NewServer(serverOptions...)
 
 	// attach the Ping service to the server
 	pb.RegisterCDEServiceServer(grpcServer, &s)  // start the server
@@ -166,10 +152,7 @@ func startRESTServer(address, grpcAddress string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-
-	// TODO revert this changes
-	//mux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher))
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(runtime.DefaultHeaderMatcher), runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName:false, EnumsAsInts:true, EmitDefaults:true}))
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}  // Register ping
 	err := pb.RegisterCDEServiceHandlerFromEndpoint(ctx, mux, grpcAddress, opts)
@@ -183,7 +166,6 @@ func startRESTServer(address, grpcAddress string) error {
 }
 
 func getMongoCollection(dbName, collectionName, mongoHost string )  *mongo.Collection {
-
 	// Register custom codecs for protobuf Timestamp and wrapper types
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mongoClient, err :=  mongo.Connect(ctx, options.Client().ApplyURI(mongoHost), options.Client().SetRegistry(bson.NewRegistryBuilder().
@@ -202,7 +184,7 @@ func main()  {
 
 	// fire the gRPC server in a goroutine
 	go func() {
-		err := startGRPCServer(grpc_port)
+		err := startGRPCServer(grpcPort)
 		if err != nil {
 			log.Fatalf("failed to start gRPC server: %s", err)
 		}
@@ -210,7 +192,7 @@ func main()  {
 
 	// fire the REST server in a goroutine
 	go func() {
-		err := startRESTServer(rest_port, grpc_port)
+		err := startRESTServer(restPort, grpcPort)
 		if err != nil {
 			log.Fatalf("failed to start gRPC server: %s", err)
 		}
@@ -220,78 +202,105 @@ func main()  {
 	select {}
 }
 
-func initializeProcess()  {
+func loadEnv(){
+	mongoDbHost = os.Getenv("MONGO_HOST")
+	redisPort = os.Getenv("REDIS_PORT")
+	grpcPort = os.Getenv("GRPC_PORT")
+	restPort = os.Getenv("REST_PORT")
+}
 
+func initializeProcess()  {
 	fmt.Println("Welcome to init() function")
-	primeTiles := getMongoCollection("cwtx2devel", "tiles", developmentMongoHost)
+	err := godotenv.Load()
+	if err != nil {
+		log.Println(err.Error())
+	}
+	loadEnv()
+	primeTiles := getMongoCollection("optimus", "contents", mongoDbHost)
 	loadingInToArray(primeTiles)
 }
 
 func loadingInToArray(tileCollection *mongo.Collection){
 	// creating pipes for mongo aggregation
-	myStages := mongo.Pipeline{}
-	myStages = append(myStages, bson.D{{"$match", bson.D{{"content.publishState", true}}}})
+	pipeline := mongo.Pipeline{}
 
-	myStages = append(myStages, bson.D{{"$project", bson.D{
+	//stage1 communicating with diff collection
+	stage1 := bson.D{{"$lookup", bson.M{"from": "monetizes", "localField": "ref_id", "foreignField": "ref_id", "as": "play"}}}
+
+	pipeline = append(pipeline, stage1)
+
+	//stage2 unwinding the schema accroding in the lookup result
+	stage2 := bson.D{{"$unwind", "$play"}}
+	pipeline = append(pipeline, stage2)
+
+
+	//stage4 groupby stage
+	stage4 := bson.D{{"$group", bson.D{{"_id", bson.D{
+		{"created_at", "$created_at"},
+		{"updated_at", "$updated_at"},
+		{"contentId", "$ref_id"},
+		{"releaseDate", "$metadata.releaseDate"},
+		{"year", "$metadata.year"},
+		{"imdbId", "$metadata.imdbId"},
+		{"rating", "$metadata.rating"},
+		{"viewCount", "$metadata.viewCount"},
+
+	}}, {"contentTile", bson.D{{"$push", bson.D{
+		{"title", "$metadata.title"},
+		{"portrait", "$media.portrait",},
+		{"poster", "$media.landscape"},
+		{"video", "$media.video"},
+		{"contentId", "$ref_id"},
+		{"isDetailPage", "$content.detailPage"},
+		{"type", "$tileType"},
+		{"play", "$play.contentAvailable"},
+	}}}}}}}
+
+	pipeline = append(pipeline, stage4)
+
+	//stage6 unwinding the resultant array
+	stage6 := bson.D{{"$unwind", "$contentTile"}}
+	pipeline = append(pipeline, stage6)
+
+
+	//stage6 moulding according to the deliver schema
+	stage7 := bson.D{{"$project", bson.D{
 		{"_id", 0},
-		{"ref_id", 1},
-		{"metadata.title", 1},
-		{"posters.landscape", 1},
-		{"posters.portrait", 1},
-		{"content.package", 1},
-		{"content.source", 1},
-		{"content.target", 1},
-		{"created_at", 1},
-		{"content.detailPage", 1},
-		{"metadata.releaseDate", 1}}}} )
+		{"title", "$contentTile.title"},
+		{"poster", "$contentTile.poster"},
+		{"portriat", "$contentTile.portrait"},
+		{"type", "$contentTile.type"},
+		{"isDetailPage", "$contentTile.isDetailPage"},
+		{"contentId", "$contentTile.contentId"},
+		{"play", "$contentTile.play"},
+		{"video", "$contentTile.video"},
+	}}}
+	pipeline = append(pipeline, stage7)
 
-
-	cur, err := tileCollection.Aggregate(context.Background(), myStages)
+	cur, err := tileCollection.Aggregate(context.Background(), pipeline)
 	if err != nil {
 		log.Println("Error while find ")
 		log.Fatal(err)
 	}
 
 	for cur.Next(context.Background()) {
-		var movieTile pb.MovieTile
-		// converting curors to movieTiles
-		err := cur.Decode(&movieTile)
+		var content pbSch.Content
+		err = cur.Decode(&content)
 		if err != nil {
-			log.Fatal("Error decoding ************* ", err)
+			log.Fatal(err)
 		}
-		var contentTile pb.ContentTile
-		contentTile.Title = movieTile.Metadata.Title
-		contentTile.IsDetailPage = movieTile.Content.DetailPage
-		if len(movieTile.Posters.Portrait) > 0 {
-			contentTile.Portrait = movieTile.Posters.Portrait
-		}
-
-		if len(movieTile.Posters.Landscape) > 0 {
-			contentTile.Poster = movieTile.Posters.Landscape
-		}
-
-		if len(movieTile.RefId) == 0 {
-			movieTile.RefId = cur.Current.Lookup("ref_id").StringValue()
-		}
-		contentTile.ContentId = movieTile.RefId
-		contentTile.Target = movieTile.Content.Target
-		contentTile.RealeaseDate = movieTile.Metadata.ReleaseDate
-		contentTile.PackageName = movieTile.Content.Package
-
-		contentTile.TileType = pb.TileType_ImageTile
-		// filling the target Array.
-		targetArray = append(targetArray, contentTile)
+		targetArray = append(targetArray, content)
 	}
 }
-
 
 type Server struct {
 	Tiles TileArray
 }
 
 func(s *Server) Search( ctx context.Context, query *pb.SearchQuery) (*pb.SearchResponse, error) {
+	log.Println("search********")
 	results := fuzzy.FindFrom(query.Query, s.Tiles)
-	var searchResult []*pb.ContentTile
+	var searchResult []*pbSch.Content
 	for _, r := range results {
 		searchResult = append(searchResult , &s.Tiles[r.Index])
 	}
@@ -300,6 +309,7 @@ func(s *Server) Search( ctx context.Context, query *pb.SearchQuery) (*pb.SearchR
 
 
 func(s *Server) SearchStream( query *pb.SearchQuery, stream pb.CDEService_SearchStreamServer) error {
+	log.Println("SearchStream********")
 	results := fuzzy.FindFrom(query.Query, s.Tiles)
 	for _, r := range results {
 		err := stream.Send(&s.Tiles[r.Index])

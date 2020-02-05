@@ -44,7 +44,7 @@
           "200": {
             "description": "A successful response.(streaming responses)",
             "schema": {
-              "$ref": "#/x-stream-definitions/CDEServiceContentTile"
+              "$ref": "#/x-stream-definitions/SchedularServiceContent"
             }
           }
         },
@@ -65,51 +65,6 @@
     }
   },
   "definitions": {
-    "CDEServiceContentTile": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "mediaUrl": {
-          "type": "string"
-        },
-        "tileType": {
-          "$ref": "#/definitions/CDEServiceTileType"
-        },
-        "poster": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "portrait": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "isDetailPage": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "packageName": {
-          "type": "string"
-        },
-        "contentId": {
-          "type": "string"
-        },
-        "target": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "realeaseDate": {
-          "type": "string"
-        }
-      }
-    },
     "CDEServiceSearchQuery": {
       "type": "object",
       "properties": {
@@ -124,12 +79,85 @@
         "contentTile": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CDEServiceContentTile"
+            "$ref": "#/definitions/SchedularServiceContent"
           }
         }
       }
     },
-    "CDEServiceTileType": {
+    "SchedularServiceContent": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "poster": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "portriat": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/SchedularServiceTileType"
+        },
+        "isDetailPage": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "contentId": {
+          "type": "string"
+        },
+        "play": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchedularServicePlay"
+          }
+        },
+        "video": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "new schema"
+    },
+    "SchedularServiceMonetize": {
+      "type": "string",
+      "enum": [
+        "Free",
+        "Paid",
+        "Subscription",
+        "Rent"
+      ],
+      "default": "Free"
+    },
+    "SchedularServicePlay": {
+      "type": "object",
+      "properties": {
+        "monetize": {
+          "$ref": "#/definitions/SchedularServiceMonetize"
+        },
+        "target": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "SchedularServiceTileType": {
       "type": "string",
       "enum": [
         "ImageTile",
@@ -179,17 +207,17 @@
     }
   },
   "x-stream-definitions": {
-    "CDEServiceContentTile": {
+    "SchedularServiceContent": {
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/CDEServiceContentTile"
+          "$ref": "#/definitions/SchedularServiceContent"
         },
         "error": {
           "$ref": "#/definitions/runtimeStreamError"
         }
       },
-      "title": "Stream result of CDEServiceContentTile"
+      "title": "Stream result of SchedularServiceContent"
     }
   }
 }

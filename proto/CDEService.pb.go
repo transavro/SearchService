@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	proto1 "github.com/transavro/ScheduleService/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -25,45 +26,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type TileType int32
-
-const (
-	TileType_ImageTile     TileType = 0
-	TileType_VideoTile     TileType = 1
-	TileType_FeatureTile   TileType = 2
-	TileType_AdvertiseTile TileType = 3
-	TileType_CarouselTile  TileType = 4
-)
-
-var TileType_name = map[int32]string{
-	0: "ImageTile",
-	1: "VideoTile",
-	2: "FeatureTile",
-	3: "AdvertiseTile",
-	4: "CarouselTile",
-}
-
-var TileType_value = map[string]int32{
-	"ImageTile":     0,
-	"VideoTile":     1,
-	"FeatureTile":   2,
-	"AdvertiseTile": 3,
-	"CarouselTile":  4,
-}
-
-func (x TileType) String() string {
-	return proto.EnumName(TileType_name, int32(x))
-}
-
-func (TileType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{0}
-}
-
 type SearchQuery struct {
 	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-" bson:"-"`
-	XXX_unrecognized     []byte   `json:"-" bson:"-"`
-	XXX_sizecache        int32    `json:"-" bson:"-"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *SearchQuery) Reset()         { *m = SearchQuery{} }
@@ -99,10 +66,10 @@ func (m *SearchQuery) GetQuery() string {
 }
 
 type SearchResponse struct {
-	ContentTile          []*ContentTile `protobuf:"bytes,1,rep,name=contentTile,proto3" json:"contentTile,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-" bson:"-"`
-	XXX_unrecognized     []byte         `json:"-" bson:"-"`
-	XXX_sizecache        int32          `json:"-" bson:"-"`
+	ContentTile          []*proto1.Content `protobuf:"bytes,1,rep,name=contentTile,proto3" json:"contentTile,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *SearchResponse) Reset()         { *m = SearchResponse{} }
@@ -130,442 +97,39 @@ func (m *SearchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SearchResponse proto.InternalMessageInfo
 
-func (m *SearchResponse) GetContentTile() []*ContentTile {
+func (m *SearchResponse) GetContentTile() []*proto1.Content {
 	if m != nil {
 		return m.ContentTile
 	}
 	return nil
 }
 
-type ContentTile struct {
-	Title                string   `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	MediaUrl             string   `protobuf:"bytes,2,opt,name=mediaUrl,proto3" json:"mediaUrl,omitempty"`
-	TileType             TileType `protobuf:"varint,3,opt,name=tileType,proto3,enum=CDEService.TileType" json:"tileType,omitempty"`
-	Poster               []string `protobuf:"bytes,4,rep,name=poster,proto3" json:"poster,omitempty"`
-	Portrait             []string `protobuf:"bytes,5,rep,name=portrait,proto3" json:"portrait,omitempty"`
-	IsDetailPage         bool     `protobuf:"varint,6,opt,name=isDetailPage,proto3" json:"isDetailPage,omitempty"`
-	PackageName          string   `protobuf:"bytes,7,opt,name=packageName,proto3" json:"packageName,omitempty"`
-	ContentId            string   `protobuf:"bytes,8,opt,name=contentId,proto3" json:"contentId,omitempty"`
-	Target               []string `protobuf:"bytes,9,rep,name=target,proto3" json:"target,omitempty"`
-	RealeaseDate         string   `protobuf:"bytes,10,opt,name=realeaseDate,proto3" json:"realeaseDate,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-" bson:"-"`
-	XXX_unrecognized     []byte   `json:"-" bson:"-"`
-	XXX_sizecache        int32    `json:"-" bson:"-"`
-}
-
-func (m *ContentTile) Reset()         { *m = ContentTile{} }
-func (m *ContentTile) String() string { return proto.CompactTextString(m) }
-func (*ContentTile) ProtoMessage()    {}
-func (*ContentTile) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{2}
-}
-
-func (m *ContentTile) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ContentTile.Unmarshal(m, b)
-}
-func (m *ContentTile) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ContentTile.Marshal(b, m, deterministic)
-}
-func (m *ContentTile) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContentTile.Merge(m, src)
-}
-func (m *ContentTile) XXX_Size() int {
-	return xxx_messageInfo_ContentTile.Size(m)
-}
-func (m *ContentTile) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContentTile.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContentTile proto.InternalMessageInfo
-
-func (m *ContentTile) GetTitle() string {
-	if m != nil {
-		return m.Title
-	}
-	return ""
-}
-
-func (m *ContentTile) GetMediaUrl() string {
-	if m != nil {
-		return m.MediaUrl
-	}
-	return ""
-}
-
-func (m *ContentTile) GetTileType() TileType {
-	if m != nil {
-		return m.TileType
-	}
-	return TileType_ImageTile
-}
-
-func (m *ContentTile) GetPoster() []string {
-	if m != nil {
-		return m.Poster
-	}
-	return nil
-}
-
-func (m *ContentTile) GetPortrait() []string {
-	if m != nil {
-		return m.Portrait
-	}
-	return nil
-}
-
-func (m *ContentTile) GetIsDetailPage() bool {
-	if m != nil {
-		return m.IsDetailPage
-	}
-	return false
-}
-
-func (m *ContentTile) GetPackageName() string {
-	if m != nil {
-		return m.PackageName
-	}
-	return ""
-}
-
-func (m *ContentTile) GetContentId() string {
-	if m != nil {
-		return m.ContentId
-	}
-	return ""
-}
-
-func (m *ContentTile) GetTarget() []string {
-	if m != nil {
-		return m.Target
-	}
-	return nil
-}
-
-func (m *ContentTile) GetRealeaseDate() string {
-	if m != nil {
-		return m.RealeaseDate
-	}
-	return ""
-}
-
-type MovieTile struct {
-	RefId                string    `protobuf:"bytes,1,opt,name=ref_id,json=refId,proto3" json:"ref_id,omitempty"`
-	Posters              *POSTERS  `protobuf:"bytes,2,opt,name=posters,proto3" json:"posters,omitempty"`
-	Content              *CONTENT  `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
-	Metadata             *METADATA `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	TileType             TileType  `protobuf:"varint,5,opt,name=tileType,proto3,enum=CDEService.TileType" json:"tileType,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-" bson:"-"`
-	XXX_unrecognized     []byte    `json:"-" bson:"-"`
-	XXX_sizecache        int32     `json:"-" bson:"-"`
-}
-
-func (m *MovieTile) Reset()         { *m = MovieTile{} }
-func (m *MovieTile) String() string { return proto.CompactTextString(m) }
-func (*MovieTile) ProtoMessage()    {}
-func (*MovieTile) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{3}
-}
-
-func (m *MovieTile) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MovieTile.Unmarshal(m, b)
-}
-func (m *MovieTile) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MovieTile.Marshal(b, m, deterministic)
-}
-func (m *MovieTile) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MovieTile.Merge(m, src)
-}
-func (m *MovieTile) XXX_Size() int {
-	return xxx_messageInfo_MovieTile.Size(m)
-}
-func (m *MovieTile) XXX_DiscardUnknown() {
-	xxx_messageInfo_MovieTile.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MovieTile proto.InternalMessageInfo
-
-func (m *MovieTile) GetRefId() string {
-	if m != nil {
-		return m.RefId
-	}
-	return ""
-}
-
-func (m *MovieTile) GetPosters() *POSTERS {
-	if m != nil {
-		return m.Posters
-	}
-	return nil
-}
-
-func (m *MovieTile) GetContent() *CONTENT {
-	if m != nil {
-		return m.Content
-	}
-	return nil
-}
-
-func (m *MovieTile) GetMetadata() *METADATA {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-func (m *MovieTile) GetTileType() TileType {
-	if m != nil {
-		return m.TileType
-	}
-	return TileType_ImageTile
-}
-
-type POSTERS struct {
-	Landscape            []string `protobuf:"bytes,1,rep,name=landscape,proto3" json:"landscape,omitempty"`
-	Portrait             []string `protobuf:"bytes,2,rep,name=portrait,proto3" json:"portrait,omitempty"`
-	Banner               []string `protobuf:"bytes,3,rep,name=banner,proto3" json:"banner,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-" bson:"-"`
-	XXX_unrecognized     []byte   `json:"-" bson:"-"`
-	XXX_sizecache        int32    `json:"-" bson:"-"`
-}
-
-func (m *POSTERS) Reset()         { *m = POSTERS{} }
-func (m *POSTERS) String() string { return proto.CompactTextString(m) }
-func (*POSTERS) ProtoMessage()    {}
-func (*POSTERS) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{4}
-}
-
-func (m *POSTERS) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_POSTERS.Unmarshal(m, b)
-}
-func (m *POSTERS) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_POSTERS.Marshal(b, m, deterministic)
-}
-func (m *POSTERS) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_POSTERS.Merge(m, src)
-}
-func (m *POSTERS) XXX_Size() int {
-	return xxx_messageInfo_POSTERS.Size(m)
-}
-func (m *POSTERS) XXX_DiscardUnknown() {
-	xxx_messageInfo_POSTERS.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_POSTERS proto.InternalMessageInfo
-
-func (m *POSTERS) GetLandscape() []string {
-	if m != nil {
-		return m.Landscape
-	}
-	return nil
-}
-
-func (m *POSTERS) GetPortrait() []string {
-	if m != nil {
-		return m.Portrait
-	}
-	return nil
-}
-
-func (m *POSTERS) GetBanner() []string {
-	if m != nil {
-		return m.Banner
-	}
-	return nil
-}
-
-type METADATA struct {
-	Title                string   `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	ReleaseDate          string   `protobuf:"bytes,2,opt,name=releaseDate,proto3" json:"releaseDate,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-" bson:"-"`
-	XXX_unrecognized     []byte   `json:"-" bson:"-"`
-	XXX_sizecache        int32    `json:"-" bson:"-"`
-}
-
-func (m *METADATA) Reset()         { *m = METADATA{} }
-func (m *METADATA) String() string { return proto.CompactTextString(m) }
-func (*METADATA) ProtoMessage()    {}
-func (*METADATA) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{5}
-}
-
-func (m *METADATA) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_METADATA.Unmarshal(m, b)
-}
-func (m *METADATA) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_METADATA.Marshal(b, m, deterministic)
-}
-func (m *METADATA) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_METADATA.Merge(m, src)
-}
-func (m *METADATA) XXX_Size() int {
-	return xxx_messageInfo_METADATA.Size(m)
-}
-func (m *METADATA) XXX_DiscardUnknown() {
-	xxx_messageInfo_METADATA.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_METADATA proto.InternalMessageInfo
-
-func (m *METADATA) GetTitle() string {
-	if m != nil {
-		return m.Title
-	}
-	return ""
-}
-
-func (m *METADATA) GetReleaseDate() string {
-	if m != nil {
-		return m.ReleaseDate
-	}
-	return ""
-}
-
-type CONTENT struct {
-	DetailPage           bool     `protobuf:"varint,1,opt,name=detailPage,proto3" json:"detailPage,omitempty"`
-	Package              string   `protobuf:"bytes,2,opt,name=package,proto3" json:"package,omitempty"`
-	Target               []string `protobuf:"bytes,3,rep,name=target,proto3" json:"target,omitempty"`
-	Type                 string   `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
-	PlaystoreUrl         string   `protobuf:"bytes,5,opt,name=playstoreUrl,proto3" json:"playstoreUrl,omitempty"`
-	UseAlternate         bool     `protobuf:"varint,6,opt,name=useAlternate,proto3" json:"useAlternate,omitempty"`
-	AlternateUrl         string   `protobuf:"bytes,7,opt,name=alternateUrl,proto3" json:"alternateUrl,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-" bson:"-"`
-	XXX_unrecognized     []byte   `json:"-" bson:"-"`
-	XXX_sizecache        int32    `json:"-" bson:"-"`
-}
-
-func (m *CONTENT) Reset()         { *m = CONTENT{} }
-func (m *CONTENT) String() string { return proto.CompactTextString(m) }
-func (*CONTENT) ProtoMessage()    {}
-func (*CONTENT) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b71e49cbfefc313f, []int{6}
-}
-
-func (m *CONTENT) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CONTENT.Unmarshal(m, b)
-}
-func (m *CONTENT) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CONTENT.Marshal(b, m, deterministic)
-}
-func (m *CONTENT) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CONTENT.Merge(m, src)
-}
-func (m *CONTENT) XXX_Size() int {
-	return xxx_messageInfo_CONTENT.Size(m)
-}
-func (m *CONTENT) XXX_DiscardUnknown() {
-	xxx_messageInfo_CONTENT.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CONTENT proto.InternalMessageInfo
-
-func (m *CONTENT) GetDetailPage() bool {
-	if m != nil {
-		return m.DetailPage
-	}
-	return false
-}
-
-func (m *CONTENT) GetPackage() string {
-	if m != nil {
-		return m.Package
-	}
-	return ""
-}
-
-func (m *CONTENT) GetTarget() []string {
-	if m != nil {
-		return m.Target
-	}
-	return nil
-}
-
-func (m *CONTENT) GetType() string {
-	if m != nil {
-		return m.Type
-	}
-	return ""
-}
-
-func (m *CONTENT) GetPlaystoreUrl() string {
-	if m != nil {
-		return m.PlaystoreUrl
-	}
-	return ""
-}
-
-func (m *CONTENT) GetUseAlternate() bool {
-	if m != nil {
-		return m.UseAlternate
-	}
-	return false
-}
-
-func (m *CONTENT) GetAlternateUrl() string {
-	if m != nil {
-		return m.AlternateUrl
-	}
-	return ""
-}
-
 func init() {
-	proto.RegisterEnum("CDEService.TileType", TileType_name, TileType_value)
 	proto.RegisterType((*SearchQuery)(nil), "CDEService.SearchQuery")
 	proto.RegisterType((*SearchResponse)(nil), "CDEService.SearchResponse")
-	proto.RegisterType((*ContentTile)(nil), "CDEService.ContentTile")
-	proto.RegisterType((*MovieTile)(nil), "CDEService.MovieTile")
-	proto.RegisterType((*POSTERS)(nil), "CDEService.POSTERS")
-	proto.RegisterType((*METADATA)(nil), "CDEService.METADATA")
-	proto.RegisterType((*CONTENT)(nil), "CDEService.CONTENT")
 }
 
 func init() { proto.RegisterFile("CDEService.proto", fileDescriptor_b71e49cbfefc313f) }
 
 var fileDescriptor_b71e49cbfefc313f = []byte{
-	// 678 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0xf9, 0xcf, 0x38, 0x2d, 0x65, 0x29, 0x65, 0x15, 0x55, 0x28, 0x32, 0x97, 0xa8, 0x12,
-	0x6d, 0x15, 0x4e, 0xf4, 0x16, 0x92, 0x20, 0x55, 0xa8, 0x7f, 0x8e, 0xe1, 0x02, 0x02, 0x6d, 0xe3,
-	0x69, 0xb0, 0x70, 0xbc, 0x66, 0xbd, 0xa9, 0xd4, 0x2b, 0xaf, 0xc0, 0xf3, 0x70, 0xe4, 0x09, 0x38,
-	0x72, 0xed, 0x83, 0xa0, 0xdd, 0xb5, 0x93, 0x75, 0x51, 0x25, 0x6e, 0xfe, 0xbe, 0xf9, 0x32, 0x33,
-	0x3b, 0xf3, 0x65, 0x60, 0x6b, 0x34, 0x9e, 0x4c, 0x51, 0x5c, 0x47, 0x33, 0xdc, 0x4f, 0x05, 0x97,
-	0x9c, 0xc0, 0x9a, 0xe9, 0xee, 0xce, 0x39, 0x9f, 0xc7, 0x78, 0xc0, 0xd2, 0xe8, 0x80, 0x25, 0x09,
-	0x97, 0x4c, 0x46, 0x3c, 0xc9, 0x8c, 0xd2, 0x7b, 0x0e, 0xee, 0x14, 0x99, 0x98, 0x7d, 0xb9, 0x58,
-	0xa2, 0xb8, 0x21, 0xdb, 0x50, 0xff, 0xa6, 0x3e, 0xa8, 0xd3, 0x73, 0xfa, 0x6d, 0xdf, 0x00, 0xef,
-	0x2d, 0x6c, 0x1a, 0x91, 0x8f, 0x59, 0xca, 0x93, 0x0c, 0xc9, 0x2b, 0x70, 0x67, 0x3c, 0x91, 0x98,
-	0xc8, 0x20, 0x8a, 0x91, 0x3a, 0xbd, 0x6a, 0xdf, 0x1d, 0x3c, 0xdd, 0xb7, 0x1a, 0x19, 0xad, 0xc3,
-	0xbe, 0xad, 0xf5, 0x7e, 0x55, 0xc0, 0xb5, 0x82, 0xaa, 0xa4, 0x8c, 0xa4, 0x4e, 0xa2, 0x4b, 0x6a,
-	0x40, 0xba, 0xd0, 0x5a, 0x60, 0x18, 0xb1, 0x77, 0x22, 0xa6, 0x15, 0x1d, 0x58, 0x61, 0x72, 0x08,
-	0x2d, 0x19, 0xc5, 0x18, 0xdc, 0xa4, 0x48, 0xab, 0x3d, 0xa7, 0xbf, 0x39, 0xd8, 0xb6, 0x2b, 0x07,
-	0x79, 0xcc, 0x5f, 0xa9, 0xc8, 0x0e, 0x34, 0x52, 0x9e, 0x49, 0x14, 0xb4, 0xd6, 0xab, 0xf6, 0xdb,
-	0x7e, 0x8e, 0x54, 0x95, 0x94, 0x0b, 0x29, 0x58, 0x24, 0x69, 0x5d, 0x47, 0x56, 0x98, 0x78, 0xd0,
-	0x89, 0xb2, 0x31, 0x4a, 0x16, 0xc5, 0xe7, 0x6c, 0x8e, 0xb4, 0xd1, 0x73, 0xfa, 0x2d, 0xbf, 0xc4,
-	0x91, 0x1e, 0xb8, 0x29, 0x9b, 0x7d, 0x65, 0x73, 0x3c, 0x65, 0x0b, 0xa4, 0x4d, 0xdd, 0xa8, 0x4d,
-	0x91, 0x5d, 0x68, 0xe7, 0x8f, 0x3f, 0x0e, 0x69, 0x4b, 0xc7, 0xd7, 0x84, 0xea, 0x4b, 0x32, 0x31,
-	0x47, 0x49, 0xdb, 0xa6, 0x2f, 0x83, 0x54, 0x6d, 0x81, 0x2c, 0x46, 0x96, 0xe1, 0x98, 0x49, 0xa4,
-	0xa0, 0x7f, 0x58, 0xe2, 0xbc, 0x5b, 0x07, 0xda, 0x27, 0xfc, 0x3a, 0x42, 0x3d, 0xc5, 0x27, 0xd0,
-	0x10, 0x78, 0xf5, 0x39, 0x0a, 0x8b, 0x31, 0x0a, 0xbc, 0x3a, 0x0e, 0xc9, 0x0b, 0x68, 0x9a, 0xa7,
-	0x66, 0x7a, 0x8a, 0xee, 0xe0, 0xb1, 0x3d, 0xa9, 0xf3, 0xb3, 0x69, 0x30, 0xf1, 0xa7, 0x7e, 0xa1,
-	0x51, 0xf2, 0xbc, 0x39, 0x3d, 0xd8, 0x3b, 0xf2, 0xd1, 0xd9, 0x69, 0x30, 0x39, 0x0d, 0xfc, 0x42,
-	0xa3, 0x16, 0xb1, 0x40, 0xc9, 0x42, 0x26, 0x19, 0xad, 0x69, 0x7d, 0x69, 0x11, 0x27, 0x93, 0x60,
-	0x38, 0x1e, 0x06, 0x43, 0x7f, 0xa5, 0x2a, 0xad, 0xae, 0xfe, 0x3f, 0xab, 0xf3, 0x3e, 0x40, 0x33,
-	0x6f, 0x53, 0xcd, 0x32, 0x66, 0x49, 0x98, 0xcd, 0x58, 0x6a, 0x2c, 0xd7, 0xf6, 0xd7, 0x44, 0x69,
-	0x97, 0x95, 0x3b, 0xbb, 0xdc, 0x81, 0xc6, 0x25, 0x4b, 0x12, 0x14, 0xb4, 0x6a, 0xe6, 0x6c, 0x90,
-	0xf7, 0x1a, 0x5a, 0x45, 0x93, 0xf7, 0xf8, 0xb0, 0x07, 0xae, 0xc0, 0xf5, 0x22, 0x8c, 0x15, 0x6d,
-	0xca, 0xfb, 0xe3, 0x40, 0x33, 0x9f, 0x0c, 0x79, 0x06, 0x10, 0xae, 0x1d, 0xe3, 0x68, 0xc7, 0x58,
-	0x0c, 0xa1, 0xd0, 0xcc, 0xcd, 0x91, 0x67, 0x2a, 0xa0, 0xe5, 0x84, 0x6a, 0xc9, 0x09, 0x04, 0x6a,
-	0x52, 0x0d, 0xab, 0xa6, 0xe5, 0xfa, 0x5b, 0xb9, 0x23, 0x8d, 0xd9, 0x4d, 0x26, 0xb9, 0x40, 0xf5,
-	0xff, 0xa8, 0x1b, 0x77, 0xd8, 0x9c, 0xd2, 0x2c, 0x33, 0x1c, 0xc6, 0x12, 0x45, 0xa2, 0x1a, 0xcf,
-	0xdd, 0x6b, 0x73, 0x4a, 0xc3, 0x0a, 0xa0, 0xf2, 0x18, 0xfb, 0x96, 0xb8, 0xbd, 0x4f, 0xd0, 0x2a,
-	0x96, 0x42, 0x36, 0xa0, 0x7d, 0xbc, 0x60, 0x73, 0x6d, 0xb8, 0xad, 0x07, 0x0a, 0xbe, 0x8f, 0x42,
-	0xe4, 0x1a, 0x3a, 0xe4, 0x21, 0xb8, 0x6f, 0x90, 0xc9, 0xa5, 0x30, 0xf1, 0x0a, 0x79, 0x04, 0x1b,
-	0xc3, 0xf0, 0x1a, 0x85, 0x8c, 0x32, 0x43, 0x55, 0xc9, 0x16, 0x74, 0x46, 0x4c, 0xf0, 0x65, 0x86,
-	0xb1, 0x66, 0x6a, 0x83, 0x9f, 0x0e, 0x58, 0xc7, 0x8a, 0x7c, 0x84, 0x8e, 0xb9, 0x34, 0x53, 0x29,
-	0x90, 0x2d, 0x48, 0xe9, 0xa4, 0x58, 0x87, 0xaa, 0x7b, 0xdf, 0xad, 0xf1, 0xe8, 0xf7, 0xdf, 0xb7,
-	0x3f, 0x2a, 0xc4, 0xdb, 0x38, 0xc8, 0xac, 0x44, 0x47, 0xce, 0xde, 0xa1, 0x43, 0x2e, 0xa0, 0x61,
-	0x72, 0xdc, 0x9f, 0xb7, 0xfb, 0x6f, 0xa0, 0x38, 0x7a, 0x1e, 0xd1, 0xa9, 0x3b, 0x5e, 0x33, 0x4f,
-	0x7d, 0xe4, 0xec, 0x5d, 0x36, 0xf4, 0x19, 0x7d, 0xf9, 0x37, 0x00, 0x00, 0xff, 0xff, 0xe5, 0x72,
-	0xe8, 0x5c, 0x84, 0x05, 0x00, 0x00,
+	// 271 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x90, 0x41, 0x4a, 0x03, 0x31,
+	0x14, 0x86, 0x89, 0x62, 0xc5, 0xb4, 0x8a, 0x04, 0xc1, 0x71, 0x70, 0x51, 0xe2, 0xa6, 0x74, 0x31,
+	0x91, 0xba, 0xab, 0x2b, 0xa9, 0x2e, 0x5d, 0x74, 0xc6, 0xb5, 0x90, 0xc6, 0xc7, 0x4c, 0x60, 0x9a,
+	0x37, 0x26, 0x99, 0x82, 0x5b, 0xaf, 0xe0, 0x81, 0x3c, 0x84, 0x57, 0xf0, 0x20, 0xe2, 0xa4, 0xc5,
+	0x48, 0xe9, 0x2e, 0x79, 0xf9, 0xf8, 0x5e, 0xfe, 0x9f, 0x9e, 0xce, 0xee, 0x1f, 0x0a, 0xb0, 0x2b,
+	0xad, 0x20, 0x6b, 0x2c, 0x7a, 0x64, 0xf4, 0x6f, 0x92, 0x5e, 0x96, 0x88, 0x65, 0x0d, 0x42, 0x36,
+	0x5a, 0x48, 0x63, 0xd0, 0x4b, 0xaf, 0xd1, 0xb8, 0x40, 0xa6, 0x77, 0xa5, 0xf6, 0x55, 0xbb, 0xc8,
+	0x14, 0x2e, 0x85, 0xb7, 0xd2, 0x38, 0xb9, 0xb2, 0x28, 0x0a, 0x55, 0xc1, 0x4b, 0x5b, 0xc3, 0xda,
+	0x21, 0x3a, 0x76, 0x33, 0x95, 0xf6, 0xdf, 0x32, 0x7e, 0x45, 0xfb, 0x05, 0x48, 0xab, 0xaa, 0x79,
+	0x0b, 0xf6, 0x8d, 0x9d, 0xd1, 0x83, 0xd7, 0xdf, 0x43, 0x42, 0x86, 0x64, 0x74, 0x94, 0x87, 0x0b,
+	0x7f, 0xa4, 0x27, 0x01, 0xca, 0xc1, 0x35, 0x68, 0x1c, 0xb0, 0x5b, 0xda, 0x57, 0x68, 0x3c, 0x18,
+	0xff, 0xa4, 0x6b, 0x48, 0xc8, 0x70, 0x7f, 0xd4, 0x9f, 0x5c, 0x64, 0x5b, 0x4b, 0x66, 0x01, 0xca,
+	0x63, 0x7a, 0xf2, 0x49, 0x68, 0x94, 0x91, 0x3d, 0xd3, 0x41, 0xb0, 0x17, 0xde, 0x82, 0x5c, 0xb2,
+	0xf3, 0x2c, 0xaa, 0x24, 0xfa, 0x5c, 0xba, 0xdb, 0xcf, 0x93, 0xf7, 0xaf, 0xef, 0x8f, 0x3d, 0xc6,
+	0x8f, 0x85, 0x8b, 0x54, 0x53, 0x32, 0xbe, 0x26, 0x6c, 0x4e, 0x7b, 0xc1, 0xb2, 0xdb, 0x9c, 0x6e,
+	0x3f, 0x6c, 0xa2, 0x72, 0xd6, 0xa9, 0x07, 0xfc, 0x70, 0xad, 0x9e, 0x92, 0xf1, 0xa2, 0xd7, 0x95,
+	0x77, 0xf3, 0x13, 0x00, 0x00, 0xff, 0xff, 0x1d, 0xf1, 0x96, 0x4a, 0xbd, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -608,7 +172,7 @@ func (c *cDEServiceClient) SearchStream(ctx context.Context, in *SearchQuery, op
 }
 
 type CDEService_SearchStreamClient interface {
-	Recv() (*ContentTile, error)
+	Recv() (*proto1.Content, error)
 	grpc.ClientStream
 }
 
@@ -616,8 +180,8 @@ type cDEServiceSearchStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *cDEServiceSearchStreamClient) Recv() (*ContentTile, error) {
-	m := new(ContentTile)
+func (x *cDEServiceSearchStreamClient) Recv() (*proto1.Content, error) {
+	m := new(proto1.Content)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -663,7 +227,7 @@ func _CDEService_SearchStream_Handler(srv interface{}, stream grpc.ServerStream)
 }
 
 type CDEService_SearchStreamServer interface {
-	Send(*ContentTile) error
+	Send(*proto1.Content) error
 	grpc.ServerStream
 }
 
@@ -671,7 +235,7 @@ type cDEServiceSearchStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *cDEServiceSearchStreamServer) Send(m *ContentTile) error {
+func (x *cDEServiceSearchStreamServer) Send(m *proto1.Content) error {
 	return x.ServerStream.SendMsg(m)
 }
 
