@@ -304,9 +304,9 @@ type Server struct {
 
 func (s *Server) Search(_ context.Context, query *pb.SearchQuery) (*pb.SearchResponse, error) {
 	start := time.Now()
-	s.Add(1)
+	s.Add(2)
 	searchResult := new([]*pbSch.Content)
-	//go s.YoutubeSearch(query.GetQuery(), searchResult)
+	go s.YoutubeSearch(query.GetQuery(), searchResult)
 	go s.FuzzySearch(query.GetQuery(), searchResult)
 	s.Wait()
 	log.Println("Served at ==>", time.Since(start))
@@ -386,13 +386,81 @@ func (s Server) YoutubeSearch(query string, primeResult *[]*pbSch.Content) error
 	}
 }
 
-func (s *Server) SearchStream(query *pb.SearchQuery, stream pb.CDEService_SearchStreamServer) error {
-	results := fuzzy.FindFrom(query.Query, s.Tiles)
-	for _, r := range results {
-		err := stream.Send(&s.Tiles[r.Index])
+func (s Server) FuzzyStreamSearch(query string, stream pb.CDEService_SearchStreamServer) {
+	results := fuzzy.FindFrom(query, s.Tiles)
+	for index , r := range results {
+		if index >= 20 {
+			break
+		}
+		stream.Send(&s.Tiles[r.Index])
+	}
+	s.Done()
+}
+
+func (s Server) YoutubeStreamSearch(query string, stream pb.CDEService_SearchStreamServer) error {
+	req, err := http.NewRequest("GET", "https://www.googleapis.com/youtube/v3/search", nil)
+	if err != nil {
+		return err
+	}
+	q := req.URL.Query()
+	q.Add("key", currentKey)
+	q.Add("maxResults", "50")
+	q.Add("q", query)
+	q.Add("part", "snippet")
+
+	req.URL.RawQuery = q.Encode()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == 200 {
+		var searchResp YTSearch
+		err = json.NewDecoder(resp.Body).Decode(&searchResp)
 		if err != nil {
+			log.Println("got error 1ch  ", err.Error())
 			return err
 		}
+
+		for index, item := range searchResp.Items {
+			var contentTile pbSch.Content
+			var play pbSch.Play
+			if index >= 20 {
+				break
+			}
+			contentTile.Title = item.Snippet.Title
+			contentTile.Poster = []string{item.Snippet.Thumbnails.Medium.URL}
+			contentTile.Portriat = []string{item.Snippet.Thumbnails.Medium.URL}
+			contentTile.IsDetailPage = false
+			contentTile.Type = pbSch.TileType_ImageTile
+
+			play.Package = "com.google.android.youtube"
+			if item.ID.Kind == "youtube#video" {
+				play.Target = item.ID.VideoID
+				play.Source = "Youtube"
+				play.Type = "CWYT_VIDEO"
+				contentTile.Play = []*pbSch.Play{&play}
+				stream.Send(&contentTile)
+			}
+		}
+		resp.Body.Close()
+		s.Done()
+		return nil
+	} else {
+		currentIndex = currentIndex + 1
+		if len(youtubeApiKeys) > currentIndex {
+			currentKey = youtubeApiKeys[currentIndex]
+			return s.YoutubeStreamSearch(query, stream)
+		} else {
+			panic(errors.New("Youtube api keys got over."))
+		}
 	}
+}
+
+func (s *Server) SearchStream(query *pb.SearchQuery, stream pb.CDEService_SearchStreamServer) error {
+	s.Add(2)
+	go s.YoutubeStreamSearch(query.GetQuery(), stream)
+	go s.FuzzyStreamSearch(query.GetQuery(), stream)
+	s.Wait()
 	return nil
 }
