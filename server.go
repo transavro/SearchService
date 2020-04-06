@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/joho/godotenv"
-	"github.com/sahilm/fuzzy"
-	pbAuth "github.com/transavro/AuthService/proto"
 	pbSch "github.com/transavro/ScheduleService/proto"
 	pb "github.com/transavro/SearchService/proto"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,22 +16,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
 
-
 type nullawareStrDecoder struct{}
 
-// youtube search
 type YTSearch struct {
 	Kind          string `json:"kind"`
 	NextPageToken string `json:"nextPageToken"`
@@ -68,14 +62,13 @@ type YTSearch struct {
 }
 
 var (
-	mongoDbHost, redisPort, grpcPort, restPort string
-	targetArray TileArray
-	currentIndex   = 0
-	youtubeApiKeys = [...]string{"AIzaSyCKUyMUlRTHMG9LFSXPYEDQYn7BCfjFQyI", "AIzaSyCNGkNspHPreQQPdT-q8KfQznq4S2YqjgU", "AIzaSyABJehNy0EEzzKl-I7hXkvYeRwIupl2RYA"}
-	currentKey     string
+	mongoDbHost, grpcPort, restPort string
+	currentIndex                               = 0
+	youtubeApiKeys                             []string
+	currentKey string
 )
 
-func (nullawareStrDecoder) DecodeValue(dctx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (nullawareStrDecoder) DecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
 	if !val.CanSet() || val.Kind() != reflect.String {
 		return errors.New("bad type or not settable")
 	}
@@ -98,81 +91,65 @@ func (nullawareStrDecoder) DecodeValue(dctx bsoncodec.DecodeContext, vr bsonrw.V
 	return nil
 }
 
+//func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+//	log.Println("unaryInterceptor")
+//	err := checkingJWTToken(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return handler(ctx, req)
+//}
 
-type TileArray []pbSch.Content
-
-func (e TileArray) String(i int) string {
-	return e[i].Title
-}
-
-func (e TileArray) Len() int {
-	return len(e)
-}
-
-
-func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	log.Println("unaryInterceptor")
-	err := checkingJWTToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return handler(ctx, req)
-}
-
-func checkingJWTToken(ctx context.Context) error {
-
-	meta, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return status.Error(codes.NotFound, fmt.Sprintf("no auth meta-data found in request"))
-	}
-
-	token := meta["token"]
-
-	if len(token) == 0 {
-		return status.Error(codes.NotFound, fmt.Sprintf("Token not found"))
-	}
-
-	// calling auth service
-	conn, err := grpc.Dial(":7757", grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	// Auth here
-	authClient := pbAuth.NewAuthServiceClient(conn)
-	_, err = authClient.ValidateToken(context.Background(), &pbAuth.Token{
-		Token: token[0],
-	})
-	if err != nil {
-		return status.Error(codes.NotFound, fmt.Sprintf("Invalid token:  %s ", err))
-	} else {
-		return nil
-	}
-}
+//func checkingJWTToken(ctx context.Context) error {
+//
+//	meta, ok := metadata.FromIncomingContext(ctx)
+//	if !ok {
+//		return status.Error(codes.NotFound, fmt.Sprintf("no auth meta-data found in request"))
+//	}
+//
+//	token := meta["token"]
+//
+//	if len(token) == 0 {
+//		return status.Error(codes.NotFound, fmt.Sprintf("Token not found"))
+//	}
+//
+//	// calling auth service
+//	conn, err := grpc.Dial(":7757", grpc.WithInsecure())
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer conn.Close()
+//
+//	// Auth here
+//	authClient := pbAuth.NewAuthServiceClient(conn)
+//	_, err = authClient.ValidateToken(context.Background(), &pbAuth.Token{
+//		Token: token[0],
+//	})
+//	if err != nil {
+//		return status.Error(codes.NotFound, fmt.Sprintf("Invalid token:  %s ", err))
+//	} else {
+//		return nil
+//	}
+//}
 
 // streamAuthIntercept intercepts to validate authorization
-func streamIntercept(server interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler, ) error {
-	err := checkingJWTToken(stream.Context())
-	if err != nil {
-		return err
-	}
-	return handler(server, stream)
-}
+//func streamIntercept(server interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler, ) error {
+//	err := checkingJWTToken(stream.Context())
+//	if err != nil {
+//		return err
+//	}
+//	return handler(server, stream)
+//}
 
 func startGRPCServer(address string) error {
 	// create a listener on TCP port
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
-	} // create a server instance
-	if err != nil {
-		return err
 	}
-
 	s := Server{
-		Tiles:     targetArray,
-		WaitGroup: new(sync.WaitGroup),
+		WaitGroup:  new(sync.WaitGroup),
+		Collection: getMongoCollection("transavro", "optimus_content", mongoDbHost),
 	}
 	// TODO revert this changes
 	//serverOptions := []grpc.ServerOption{grpc.UnaryInterceptor(unaryInterceptor), grpc.StreamInterceptor(streamIntercept)}
@@ -242,9 +219,10 @@ func main() {
 
 func loadEnv() {
 	mongoDbHost = os.Getenv("MONGO_HOST")
-	redisPort = os.Getenv("REDIS_PORT")
 	grpcPort = os.Getenv("GRPC_PORT")
 	restPort = os.Getenv("REST_PORT")
+	youtubeFlagKey := os.Getenv("YOUTUBE_APIKEY")
+	youtubeApiKeys = strings.Split(youtubeFlagKey, ",")
 }
 
 func initializeProcess() {
@@ -254,32 +232,17 @@ func initializeProcess() {
 		log.Println(err.Error())
 	}
 	loadEnv()
-	primeTiles := getMongoCollection("transavro", "optimus_content", mongoDbHost)
-	loadingInToArray(primeTiles)
+	currentIndex = 0
+	currentKey = youtubeApiKeys[currentIndex]
+
 }
 
-func loadingInToArray(tileCollection *mongo.Collection) {
-	// creating pipes for mongo aggregation
-	start := time.Now()
-	log.Println("Hit mongo")
-	cur, err := tileCollection.Aggregate(context.Background(), makeSugPL(), options.Aggregate().SetAllowDiskUse(false))
-	if err != nil {
-		panic(err)
-	}
-	log.Println("mongo hit done ",time.Since(start))
-	start = time.Now()
-	err = cur.All(context.TODO(), &targetArray)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("looping done ",time.Since(start))
-}
-
-func makeSugPL() mongo.Pipeline {
+func makeSugPL(query string) mongo.Pipeline {
 	// creating pipes for mongo aggregation for recommedation
 	stages := mongo.Pipeline{}
+	stages = append(stages, bson.D{{"$match", bson.M{"$text": bson.M{"$search": query}}}})
 	stages = append(stages, bson.D{{"$match", bson.M{"content.publishstate": bson.M{"$ne": false}}}})
-	//stages = append(stages, bson.D{{"$limit", 1000}})
+	stages = append(stages, bson.D{{"$sort", bson.M{"score": bson.M{"$meta": "textScore"}}}})
 	stages = append(stages, bson.D{{"$lookup", bson.M{"from": "optimus_monetize", "localField": "refid", "foreignField": "refid", "as": "play"}}})
 	stages = append(stages, bson.D{{"$replaceRoot", bson.M{"newRoot": bson.M{"$mergeObjects": bson.A{bson.M{"$arrayElemAt": bson.A{"$play", 0}}, "$$ROOT"}}}}}) //adding stage 3  ==> https://docs.mongodb.com/manual/reference/operator/aggregation/mergeObjects/#exp._S_mergeObjects
 	stages = append(stages, bson.D{{"$project", bson.M{"play": 0}}})
@@ -298,34 +261,56 @@ func makeSugPL() mongo.Pipeline {
 }
 
 type Server struct {
-	Tiles TileArray
 	*sync.WaitGroup
+	*mongo.Collection
 }
 
-func (s *Server) Search(_ context.Context, query *pb.SearchQuery) (*pb.SearchResponse, error) {
+func (s *Server) Search(ctx context.Context, query *pb.SearchQuery) (*pb.SearchResponse, error) {
 	start := time.Now()
 	s.Add(2)
 	searchResult := new([]*pbSch.Content)
 	go s.YoutubeSearch(query.GetQuery(), searchResult)
-	go s.FuzzySearch(query.GetQuery(), searchResult)
+	go s.DBSearch(ctx, query.GetQuery(), searchResult)
 	s.Wait()
-	log.Println("Served at ==>", time.Since(start))
+	log.Println("Served Result in ", time.Since(start))
 	return &pb.SearchResponse{ContentTile: *searchResult}, nil
 }
 
-func (s Server) FuzzySearch(query string, searchResult *[]*pbSch.Content) {
-	results := fuzzy.FindFrom(query, s.Tiles)
-	for index , r := range results {
-		if index >= 20 {
-			break
-		}
-		*searchResult = append(*searchResult, &s.Tiles[r.Index])
+func (s Server) DBSearch(ctx context.Context, query string, searchResult *[]*pbSch.Content) {
+	start := time.Now()
+	cur, err := s.Aggregate(ctx, makeSugPL(query), options.Aggregate().SetAllowDiskUse(false))
+	if err != nil {
+		panic(err)
 	}
-	log.Println("From fuzzy ==> ", len(*searchResult))
+	err = cur.All(ctx, searchResult)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("mongo result ==> ", time.Since(start))
+	s.Done()
+}
+
+func (s Server) DBStreamSearch(ctx context.Context, query string, stream pb.CDEService_SearchStreamServer) {
+	start := time.Now()
+	cur, err := s.Aggregate(ctx, makeSugPL(query), options.Aggregate().SetAllowDiskUse(false))
+	if err != nil {
+		panic(err)
+	}
+	var content pbSch.Content
+	for cur.Next(ctx) {
+		if err = cur.Decode(&content); err != nil {
+			log.Fatal(err)
+		}
+		if err = stream.Send(&content); err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("mongo result ==> ", time.Since(start))
 	s.Done()
 }
 
 func (s Server) YoutubeSearch(query string, primeResult *[]*pbSch.Content) error {
+	start := time.Now()
 	req, err := http.NewRequest("GET", "https://www.googleapis.com/youtube/v3/search", nil)
 	if err != nil {
 		return err
@@ -371,30 +356,20 @@ func (s Server) YoutubeSearch(query string, primeResult *[]*pbSch.Content) error
 				*primeResult = append(*primeResult, &contentTile)
 			}
 		}
-		resp.Body.Close()
 		s.Done()
-		log.Println("From youtube ==> ", len(*primeResult))
-		return nil
+		log.Println("From youtube ==> ", time.Since(start))
+		return resp.Body.Close()
 	} else {
+		log.Println("old Api Key ", currentKey)
 		currentIndex = currentIndex + 1
 		if len(youtubeApiKeys) > currentIndex {
 			currentKey = youtubeApiKeys[currentIndex]
+			log.Println("new Api Kye ", currentKey)
 			return s.YoutubeSearch(query, primeResult)
 		} else {
 			panic(errors.New("Youtube api keys got over."))
 		}
 	}
-}
-
-func (s Server) FuzzyStreamSearch(query string, stream pb.CDEService_SearchStreamServer) {
-	results := fuzzy.FindFrom(query, s.Tiles)
-	for index , r := range results {
-		if index >= 20 {
-			break
-		}
-		stream.Send(&s.Tiles[r.Index])
-	}
-	s.Done()
 }
 
 func (s Server) YoutubeStreamSearch(query string, stream pb.CDEService_SearchStreamServer) error {
@@ -440,12 +415,14 @@ func (s Server) YoutubeStreamSearch(query string, stream pb.CDEService_SearchStr
 				play.Source = "Youtube"
 				play.Type = "CWYT_VIDEO"
 				contentTile.Play = []*pbSch.Play{&play}
-				stream.Send(&contentTile)
+				if err = stream.Send(&contentTile); err != nil {
+					return err
+				}
 			}
 		}
-		resp.Body.Close()
+
 		s.Done()
-		return nil
+		return resp.Body.Close()
 	} else {
 		currentIndex = currentIndex + 1
 		if len(youtubeApiKeys) > currentIndex {
@@ -460,7 +437,7 @@ func (s Server) YoutubeStreamSearch(query string, stream pb.CDEService_SearchStr
 func (s *Server) SearchStream(query *pb.SearchQuery, stream pb.CDEService_SearchStreamServer) error {
 	s.Add(2)
 	go s.YoutubeStreamSearch(query.GetQuery(), stream)
-	go s.FuzzyStreamSearch(query.GetQuery(), stream)
+	go s.DBStreamSearch(stream.Context(), query.GetQuery(), stream)
 	s.Wait()
 	return nil
 }
