@@ -1,0 +1,260 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "CDEService.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/search": {
+      "post": {
+        "operationId": "Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerSearchResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerSearchQuery"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    },
+    "/searchStream": {
+      "post": {
+        "operationId": "SearchStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "$ref": "#/x-stream-definitions/cloudwalkerContent"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerSearchQuery"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    },
+    "/searchtext": {
+      "post": {
+        "operationId": "SearchText",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerSearchTextResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerSearchQuery"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "cloudwalkerContent": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "poster": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "portriat": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/cloudwalkerTileType"
+        },
+        "isDetailPage": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "contentId": {
+          "type": "string"
+        },
+        "play": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cloudwalkerPlay"
+          }
+        },
+        "video": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "new schema"
+    },
+    "cloudwalkerMonetize": {
+      "type": "string",
+      "enum": [
+        "Free",
+        "Paid",
+        "Subscription",
+        "Rent"
+      ],
+      "default": "Free"
+    },
+    "cloudwalkerPlay": {
+      "type": "object",
+      "properties": {
+        "monetize": {
+          "$ref": "#/definitions/cloudwalkerMonetize"
+        },
+        "target": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "cloudwalkerSearchQuery": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "cloudwalkerSearchResponse": {
+      "type": "object",
+      "properties": {
+        "contentTile": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cloudwalkerContent"
+          }
+        }
+      }
+    },
+    "cloudwalkerSearchTextResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cloudwalkerTileType": {
+      "type": "string",
+      "enum": [
+        "ImageTile",
+        "VideoTile",
+        "FeatureTile",
+        "AdvertiseTile",
+        "CarouselTile"
+      ],
+      "default": "ImageTile"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  },
+  "x-stream-definitions": {
+    "cloudwalkerContent": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/cloudwalkerContent"
+        },
+        "error": {
+          "$ref": "#/definitions/runtimeStreamError"
+        }
+      },
+      "title": "Stream result of cloudwalkerContent"
+    }
+  }
+}
