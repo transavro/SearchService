@@ -3,26 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/joho/godotenv"
-	pb "github.com/transavro/SearchService/gen"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/joho/godotenv"
+	pb "github.com/transavro/SearchService/gen"
+	"google.golang.org/grpc"
 )
 
 var (
-	mongoDbHost, grpcPort, restPort string
+	MongoDbHost, grpcPort, restPort string
 	currentIndex                    = 0
 	youtubeApiKeys                  []string
 	currentKey                      string
-	err								error
+	err                             error
 )
-
 
 func startGRPCServer(address string) error {
 	lis, err := net.Listen("tcp", address)
@@ -30,8 +30,9 @@ func startGRPCServer(address string) error {
 		return err
 	}
 	s := Executor{
-		WaitGroup:  new(sync.WaitGroup),
-		Collection: getMongoCollection("gigatiles", "optimus_content", mongoDbHost),
+		WaitGroup:       new(sync.WaitGroup),
+		showCollection:  getMongoCollection("nayan", "justwatch_seasons", MongoDbHost),
+		movieCollection: getMongoCollection("nayan", "justwatch", MongoDbHost),
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterCDEServiceServer(grpcServer, &s)
@@ -48,8 +49,7 @@ func startRESTServer(address, grpcAddress string) error {
 	return http.ListenAndServe(address, mux)
 }
 
-
-func init(){
+func init() {
 	initializeProcess()
 }
 
@@ -68,7 +68,7 @@ func main() {
 }
 
 func loadEnv() {
-	mongoDbHost = os.Getenv("MONGO_HOST")
+	MongoDbHost = os.Getenv("MONGO_HOST")
 	grpcPort = os.Getenv("GRPC_PORT")
 	restPort = os.Getenv("REST_PORT")
 	youtubeFlagKey := os.Getenv("YOUTUBE_APIKEY")
@@ -85,4 +85,3 @@ func initializeProcess() {
 	currentIndex = 0
 	currentKey = youtubeApiKeys[currentIndex]
 }
-

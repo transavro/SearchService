@@ -33,7 +33,6 @@ type YTSearch struct {
 	} `json:"items"`
 }
 
-
 type Temp struct {
 	Title        string   `json:"title"`
 	Poster       []string `json:"poster"`
@@ -45,5 +44,3 @@ type Temp struct {
 	Contenttype  string   `json:"contenttype"`
 	Target       []string `json:"target"`
 }
-
-

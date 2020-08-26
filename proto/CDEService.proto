@@ -5,7 +5,7 @@ package cloudwalker;
 import "google/api/annotations.proto";
 
 service CDEService {
-    rpc SearchStream(SearchQuery) returns(stream Content) {
+    rpc SearchStream(SearchQuery) returns(stream Optimus) {
         option (google.api.http) = {
                 post:"/searchStream"
                 body: "*"
@@ -25,30 +25,47 @@ service CDEService {
         body: "*"
       };
     }
+
+    rpc CdeClick(TileId) returns (Resp) {
+      option (google.api.http) = {
+        post:"/cdecounter"
+        body: "*"
+      };
+    }
+}
+
+message TileId{
+  string id = 1;
+}
+
+message Resp{
+  bool result = 1;
 }
 
 message SearchQuery{
     string query = 1;
+    map<string, FilterKey> searchMeta = 2;
+}
+
+message FilterKey {
+  repeated string values = 1;
 }
 
 message SearchResponse{
-    repeated Content contentTile = 1;
+    repeated ContentDelivery contentTiles = 1;
 }
 
 message SearchTextResponse{
   repeated string result = 1;
 }
 
-// new schema
-message Content {
-  string title = 8;
-  repeated string poster = 1;
-  repeated string portriat = 2;
-  TileType type = 3;
-  bool isDetailPage = 4;
-  string contentId = 5;
-  repeated Play play = 6;
-  repeated string video = 7;
+
+
+enum Monetize {
+  Free = 0;
+  Paid = 1;
+  Subscription = 2;
+  Rent = 3;
 }
 
 enum TileType {
@@ -59,17 +76,82 @@ enum TileType {
   CarouselTile = 4;
 }
 
-message Play {
-  Monetize monetize = 5;
-  string target = 1;
+message ContentAvailable {
+  Monetize monetize = 6;
+  string target_id = 1;
   string source = 2;
   string package = 3;
   string type = 4;
+  string target = 5;
 }
 
-enum Monetize {
-  Free = 0;
-  Paid = 1;
-  Subscription = 2;
-  Rent = 3;
+message Media {
+  repeated string landscape = 5;
+  repeated string portrait = 1;
+  repeated string backdrop = 2;
+  repeated string banner = 3;
+  repeated string video = 4;
+}
+
+message Content {
+  bool publish_state = 3;
+  bool detail_page = 1;
+  repeated string sources = 2;
+}
+
+message Metadata {
+  string title = 20;
+  string imdb_id = 1;
+  string synopsis = 2;
+  repeated string country = 3;
+  string runtime = 4;
+  double rating = 5;
+  string release_date = 6;
+  repeated string tags = 7;
+  int32 year = 8;
+  repeated string cast = 9;
+  repeated string directors = 10;
+  repeated string genre = 11;
+  repeated string categories = 12;
+  repeated string languages = 13;
+  bool kids_safe = 14;
+  double view_count = 15;
+  int32 season = 16;
+  int32 episode = 17;
+  int32 part = 18;
+  repeated int32 mood = 19;
+}
+
+message Optimus {
+  string ref_id = 1;
+  TileType tile_type = 2;
+  Content content = 3;
+  Metadata metadata = 4;
+  repeated ContentAvailable content_available = 5;
+  Media media = 6;
+}
+
+
+
+message ContentDelivery {
+  string title = 10;
+  repeated string poster = 1;
+  repeated string portriat = 2;
+  repeated string video = 3;
+  double type = 4;
+  string season = 5;
+  string episode = 6;
+  bool isDetailPage = 7;
+  string contentId = 8;
+  repeated PLAY play = 9;
+}
+
+message PLAY {
+  double monetize = 7;
+  string targetid = 1;
+  string source = 2;
+  string package = 3;
+  string type = 4;
+  string target = 5;
+  string offerrefid = 6;
 }

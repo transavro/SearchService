@@ -11,6 +11,32 @@
     "application/json"
   ],
   "paths": {
+    "/cdecounter": {
+      "post": {
+        "operationId": "CdeClick",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerResp"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cloudwalkerTileId"
+            }
+          }
+        ],
+        "tags": [
+          "CDEService"
+        ]
+      }
+    },
     "/search": {
       "post": {
         "operationId": "Search",
@@ -44,7 +70,7 @@
           "200": {
             "description": "A successful response.(streaming responses)",
             "schema": {
-              "$ref": "#/x-stream-definitions/cloudwalkerContent"
+              "$ref": "#/x-stream-definitions/cloudwalkerOptimus"
             }
           }
         },
@@ -94,6 +120,48 @@
     "cloudwalkerContent": {
       "type": "object",
       "properties": {
+        "publish_state": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "detail_page": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cloudwalkerContentAvailable": {
+      "type": "object",
+      "properties": {
+        "monetize": {
+          "$ref": "#/definitions/cloudwalkerMonetize"
+        },
+        "target_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
+    "cloudwalkerContentDelivery": {
+      "type": "object",
+      "properties": {
         "title": {
           "type": "string"
         },
@@ -109,8 +177,21 @@
             "type": "string"
           }
         },
+        "video": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "type": {
-          "$ref": "#/definitions/cloudwalkerTileType"
+          "type": "number",
+          "format": "double"
+        },
+        "season": {
+          "type": "string"
+        },
+        "episode": {
+          "type": "string"
         },
         "isDetailPage": {
           "type": "boolean",
@@ -122,7 +203,47 @@
         "play": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cloudwalkerPlay"
+            "$ref": "#/definitions/cloudwalkerPLAY"
+          }
+        }
+      }
+    },
+    "cloudwalkerFilterKey": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cloudwalkerMedia": {
+      "type": "object",
+      "properties": {
+        "landscape": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "portrait": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "backdrop": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "banner": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "video": {
@@ -131,8 +252,104 @@
             "type": "string"
           }
         }
-      },
-      "title": "new schema"
+      }
+    },
+    "cloudwalkerMetadata": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "imdb_id": {
+          "type": "string"
+        },
+        "synopsis": {
+          "type": "string"
+        },
+        "country": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "runtime": {
+          "type": "string"
+        },
+        "rating": {
+          "type": "number",
+          "format": "double"
+        },
+        "release_date": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "year": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cast": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "directors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "genre": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kids_safe": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "view_count": {
+          "type": "number",
+          "format": "double"
+        },
+        "season": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "episode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "part": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "mood": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
     },
     "cloudwalkerMonetize": {
       "type": "string",
@@ -144,13 +361,40 @@
       ],
       "default": "Free"
     },
-    "cloudwalkerPlay": {
+    "cloudwalkerOptimus": {
+      "type": "object",
+      "properties": {
+        "ref_id": {
+          "type": "string"
+        },
+        "tile_type": {
+          "$ref": "#/definitions/cloudwalkerTileType"
+        },
+        "content": {
+          "$ref": "#/definitions/cloudwalkerContent"
+        },
+        "metadata": {
+          "$ref": "#/definitions/cloudwalkerMetadata"
+        },
+        "content_available": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cloudwalkerContentAvailable"
+          }
+        },
+        "media": {
+          "$ref": "#/definitions/cloudwalkerMedia"
+        }
+      }
+    },
+    "cloudwalkerPLAY": {
       "type": "object",
       "properties": {
         "monetize": {
-          "$ref": "#/definitions/cloudwalkerMonetize"
+          "type": "number",
+          "format": "double"
         },
-        "target": {
+        "targetid": {
           "type": "string"
         },
         "source": {
@@ -161,6 +405,21 @@
         },
         "type": {
           "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "offerrefid": {
+          "type": "string"
+        }
+      }
+    },
+    "cloudwalkerResp": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -169,16 +428,22 @@
       "properties": {
         "query": {
           "type": "string"
+        },
+        "searchMeta": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cloudwalkerFilterKey"
+          }
         }
       }
     },
     "cloudwalkerSearchResponse": {
       "type": "object",
       "properties": {
-        "contentTile": {
+        "contentTiles": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cloudwalkerContent"
+            "$ref": "#/definitions/cloudwalkerContentDelivery"
           }
         }
       }
@@ -191,6 +456,14 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "cloudwalkerTileId": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
         }
       }
     },
@@ -244,17 +517,17 @@
     }
   },
   "x-stream-definitions": {
-    "cloudwalkerContent": {
+    "cloudwalkerOptimus": {
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/cloudwalkerContent"
+          "$ref": "#/definitions/cloudwalkerOptimus"
         },
         "error": {
           "$ref": "#/definitions/runtimeStreamError"
         }
       },
-      "title": "Stream result of cloudwalkerContent"
+      "title": "Stream result of cloudwalkerOptimus"
     }
   }
 }
